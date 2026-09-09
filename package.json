@@ -1,0 +1,12 @@
+{
+  "$schema": "https://www.schemastore.org/package.json",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "build": "bun ./bin/compile-icons.mjs"
+  },
+  "devDependencies": {
+    "disarto-icons-static": "^1.0.0",
+    "svgo": "^4.1.0"
+  }
+}
