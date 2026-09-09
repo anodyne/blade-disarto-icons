@@ -1,4 +1,8 @@
 /.idea
-node_modules/
-vendor/
+/.vscode
+/node_modules
+/vendor
+
 *.cache
+
+.DS_Store
