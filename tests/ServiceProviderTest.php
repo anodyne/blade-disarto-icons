@@ -79,22 +79,26 @@ it('reports an unknown icon', function () {
 })->throws(SvgNotFound::class);
 
 it('publishes the complete SVG set to the documented public directory', function () {
-    $target = sys_get_temp_dir().'/disarto-publish-'.bin2hex(random_bytes(8));
-    $this->app->usePublicPath($target);
-    (new BladeDisartoIconsServiceProvider($this->app))->boot();
+    $destination = public_path('vendor/blade-disarto-icons');
     $paths = ServiceProvider::pathsToPublish(BladeDisartoIconsServiceProvider::class, 'blade-disarto-icons');
 
     expect($paths)->toHaveCount(1);
     expect(realpath(array_key_first($paths)))->toBe(realpath(__DIR__.'/../resources/svg'));
-    expect(array_values($paths))->toBe([public_path('vendor/blade-disarto-icons')]);
+    expect(array_values($paths))->toBe([$destination]);
 
     try {
+        mkdir($destination, 0777, true);
+        file_put_contents($destination.'/alarm.svg', 'customized published icon');
+        $this->artisan('vendor:publish', ['--tag' => 'blade-disarto-icons'])->assertExitCode(0);
+        expect(file_get_contents($destination.'/alarm.svg'))->toBe('customized published icon');
         $this->artisan('vendor:publish', ['--tag' => 'blade-disarto-icons', '--force' => true])->assertExitCode(0);
-        $published = public_path('vendor/blade-disarto-icons');
-        foreach (glob(__DIR__.'/../resources/svg/*.svg') as $source) {
-            expect(file_get_contents($published.'/'.basename($source)))->toBe(file_get_contents($source));
+        $sourceFiles = glob(__DIR__.'/../resources/svg/*.svg');
+        expect(glob($destination.'/*.svg'))->toHaveCount(count($sourceFiles));
+        foreach ($sourceFiles as $source) {
+            expect(hash_file('sha256', $destination.'/'.basename($source)))->toBe(hash_file('sha256', $source));
         }
     } finally {
-        $this->app['files']->deleteDirectory($target);
+        $this->app['files']->deleteDirectory($destination);
     }
+    expect(is_dir($destination))->toBeFalse();
 });
